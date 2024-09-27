@@ -1,20 +1,15 @@
-import { useTranslation } from 'react-i18next';
-import { Container, Typography, Button } from '@mui/material';
+import { useTranslation } from "react-i18next";
+import { Container, Grid2 as Grid, Stack, Typography } from "@mui/material";
+import Signup from "@/components/signup/Signup";
+import Login from "@/components/Login/Login";
 
 export default function Home() {
   const { t } = useTranslation();
-  
+
   return (
-    <Container>
-      <Typography variant="h4" gutterBottom>
-        {t('welcome')}
-      </Typography>
-      <Typography variant="body1" gutterBottom>
-        {t('description')}
-      </Typography>
-      <Button variant="contained" color="primary">
-        {t('getStarted')}
-      </Button>
-    </Container>
+    <Grid >
+      <Login />
+      </Grid>
+   
   );
 }
