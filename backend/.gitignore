@@ -1,0 +1,35 @@
+# Python Bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment directory
+venv/
+.venv/
+
+# Distribution / Packaging
+build/
+dist/
+*.egg-info/
+
+# Logs and local environment
+*.log
+*.env
+.env.*
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker-related files
+*.env
+*.local
+docker-compose.override.yml
+
+# System files
+.DS_Store
+Thumbs.db
+``
