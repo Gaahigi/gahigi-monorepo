@@ -3,22 +3,31 @@ import { Box, Container, Typography, Button, Card, CardContent, Grid, AppBar, To
 import Link from 'next/link';
 import Onboarding from '@/components/onboarding/Onboarding';
 import AppButton from '@/components/Button/AppButton';
+import { useRouter } from 'next/router';
 
-const SkillCard = ({ title, description, buttonText }: { title: string; description: string; buttonText: string }) => (
-  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-    <CardContent>
-      <Typography variant="h6" component="h3" gutterBottom>
-        {title}
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {description}
-      </Typography>
-      <AppButton variant="contained" color="primary">
-        {buttonText}
-      </AppButton>
-    </CardContent>
-  </Card>
-);
+const SkillCard = ({ title, description, buttonText }: { title: string; description: string; buttonText: string }) => {
+  const router = useRouter();
+
+  const handleStartCourse = () => {
+    router.push(`/course/${encodeURIComponent(title)}`);
+  };
+
+  return (
+    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <CardContent>
+        <Typography variant="h6" component="h3" gutterBottom>
+          {title}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          {description}
+        </Typography>
+        <AppButton  onClick={handleStartCourse}>
+          {buttonText}
+        </AppButton>
+      </CardContent>
+    </Card>
+  );
+};
 
 const Home = () => {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
@@ -107,7 +116,7 @@ const Home = () => {
           <Grid container justifyContent="space-between" alignItems="center">
             <Grid item>
               <Typography variant="body2" color="text.secondary">
-                © 2023 Gahigi CareerCoach. All rights reserved.
+                © 2024 Gahigi CareerCoach. All rights reserved.
               </Typography>
             </Grid>
             <Grid item>
