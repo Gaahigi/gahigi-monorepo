@@ -18,7 +18,7 @@ export class CourseController {
         return this.courseService.generateAIResponse({courseTitle, message});
     }
     @Post('onboarding')
-    async onboarding(@Body() course: any) {
-        return this.courseService.generateAIResponse(course);
+    async onboarding(@Body() course:object[]) {
+        return this.courseService.generateCareerRecommendations(course);
     }
 }
