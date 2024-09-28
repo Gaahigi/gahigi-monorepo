@@ -17,7 +17,7 @@ export class CourseController {
     async chatCourse(@Body() {courseTitle, message}: ChatCourseDto) {
         return this.courseService.generateAIResponse({courseTitle, message});
     }
-    @Post('onborading')
+    @Post('onboarding')
     async onboarding(@Body() course: any) {
         return this.courseService.generateAIResponse(course);
     }
