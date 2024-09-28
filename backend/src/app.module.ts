@@ -10,6 +10,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guards/jwt.guard';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { CourseModule } from './course/course.module';
+import { MediaService } from './course/media.service';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { CourseModule } from './course/course.module';
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
+    MediaService,
   ],
 })
 export class AppModule {}

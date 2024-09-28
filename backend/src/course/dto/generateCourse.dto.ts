@@ -7,3 +7,13 @@ export class CreateCourseContentDto {
   @ApiProperty()
   title: string;
 }
+export class ChatCourseDto {
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty()
+    message: string;
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty()
+    courseTitle: string;
+}

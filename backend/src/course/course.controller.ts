@@ -1,7 +1,7 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateCourseContentDto } from './dto/generateCourse.dto';
+import { ChatCourseDto, CreateCourseContentDto } from './dto/generateCourse.dto';
 
 
 @Controller('course')
@@ -12,5 +12,13 @@ export class CourseController {
     @Post('content')
     async createCourseContent(@Body() {title}: CreateCourseContentDto) {
         return this.courseService.generateCourseContent(title);
+    }
+    @Post('chat')
+    async chatCourse(@Body() {courseTitle, message}: ChatCourseDto) {
+        return this.courseService.generateAIResponse({courseTitle, message});
+    }
+    @Post('onborading')
+    async onboarding(@Body() course: any) {
+        return this.courseService.generateAIResponse(course);
     }
 }
