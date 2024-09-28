@@ -17,15 +17,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       const after = Date.now();
 
       console.log(
-        `Query ${params.model}.${params.action} took ${after - before}ms`
+        `Query ${params.model}.${params.action} took ${after - before}ms`,
       );
 
       return result;
     });
   }
 
-  async enableShutdownHooks(app: INestApplication) {
-   
-  }
-
+  async enableShutdownHooks(app: INestApplication) {}
 }
