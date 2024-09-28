@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Onboarding from '@/components/onboarding/Onboarding';
 import AppButton from '@/components/Button/AppButton';
 import { useRouter } from 'next/router';
+import withAuth from '../utils/withAuth';
 
 const SkillCard = ({ title, description, buttonText }: { title: string; description: string; buttonText: string }) => {
   const router = useRouter();
@@ -33,34 +34,24 @@ const Home = () => {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [skillCards, setSkillCards] = useState([]);
 
-  const handleOnboardingComplete = async (answers: string[]) => {
-    // Here you would typically send the answers to your backend AI
-    // For now, we'll simulate a response
-    const simulatedResponse = [
-      {
-        title: "Interview Mastery",
-        description: "Practice common interview questions and improve your responses.",
-        buttonText: "Start Practice"
-      },
-      {
-        title: "Networking 101",
-        description: "Learn effective strategies for building professional connections.",
-        buttonText: "Explore Techniques"
-      },
-      {
-        title: "Public Speaking",
-        description: "Boost your confidence in presenting and public speaking.",
-        buttonText: "Begin Course"
-      },
-      {
-        title: "Job Search Strategies",
-        description: "Discover effective methods for finding job opportunities in your field.",
-        buttonText: "Start Learning"
-      }
-    ];
-
-    setSkillCards(simulatedResponse);
-    setOnboardingComplete(true);
+  const handleOnboardingComplete = async (answers: Record<string, string>) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/onboarding/complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(answers),
+      });
+      const data = await response.json();
+      // Ensure that skillCards is always an array
+      setSkillCards(Array.isArray(data) ? data : []);
+      setOnboardingComplete(true);
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      // Handle error (e.g., show an error message to the user)
+      setSkillCards([]);
+    }
   };
 
   if (!onboardingComplete) {
@@ -131,4 +122,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default withAuth(Home);

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Typography, Paper, TextField, Button, CircularProgress, List, ListItem, ListItemText, Tabs, Tab } from '@mui/material';
-import MicIcon from '@mui/icons-material/Mic';
-import VideocamIcon from '@mui/icons-material/Videocam';
+import { Box, Typography, Paper, TextField, Button, CircularProgress, List, ListItem, ListItemText, Tab, Tabs } from '@mui/material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import MicIcon from '@mui/icons-material/Mic';
+import StopIcon from '@mui/icons-material/Stop';
+import VideocamIcon from '@mui/icons-material/Videocam';
 
 interface Question {
   id: number;
@@ -24,98 +25,116 @@ interface InterviewResult {
   score: number;
 }
 
+type InterviewMode = 'text' | 'voice' | 'video';
+
 const InterviewPractice: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [userAnswer, setUserAnswer] = useState('');
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [interviewHistory, setInterviewHistory] = useState<InterviewResult[]>([]);
-  const [interviewType, setInterviewType] = useState<'text' | 'speech' | 'video'>('text');
+  const [mode, setMode] = useState<InterviewMode>('text');
   const [isRecording, setIsRecording] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const fetchNextQuestion = async () => {
     setIsLoading(true);
-    // In a real application, this would be an API call to your backend
-    const mockQuestion: Question = {
-      id: Math.floor(Math.random() * 1000),
-      text: "Tell me about a time when you had to work under pressure.",
-      difficulty: 'medium'
-    };
-    setCurrentQuestion(mockQuestion);
+    try {
+      const response = await fetch('http://localhost:5000/api/interview/question');
+      const data = await response.json();
+      setCurrentQuestion(data);
+    } catch (error) {
+      console.error('Error fetching question:', error);
+    }
     setIsLoading(false);
   };
 
   const submitAnswer = async () => {
     setIsLoading(true);
-    // In a real application, this would be an API call to your AI backend
-    const mockFeedback: Feedback = {
-      content: "Your answer demonstrates experience with pressure situations. Consider providing more specific details about the outcome.",
-      confidence: 0.75,
-      suggestions: [
-        "Mention specific techniques you used to manage the pressure",
-        "Quantify the results of your actions if possible"
-      ]
-    };
-    setFeedback(mockFeedback);
-    const newResult: InterviewResult = {
-      date: new Date().toISOString().split('T')[0],
-      question: currentQuestion!.text,
-      answer: userAnswer,
-      feedback: mockFeedback,
-      score: mockFeedback.confidence * 100
-    };
-    setInterviewHistory([...interviewHistory, newResult]);
+    try {
+      let formData = new FormData();
+      formData.append('questionId', currentQuestion!.id.toString());
+      formData.append('mode', mode);
+      
+      if (mode === 'text') {
+        formData.append('answer', userAnswer);
+      } else if (mode === 'voice' || mode === 'video') {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        formData.append('audio', audioBlob, 'answer.webm');
+      }
+
+      const response = await fetch('http://localhost:5000/api/interview/feedback', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to submit answer');
+      }
+
+      const data = await response.json();
+      if (!data.feedback || typeof data.feedback.confidence !== 'number') {
+        throw new Error('Invalid feedback received from server');
+      }
+
+      setFeedback(data.feedback);
+      const newResult: InterviewResult = {
+        date: new Date().toISOString().split('T')[0],
+        question: currentQuestion!.text,
+        answer: userAnswer,
+        feedback: data.feedback,
+        score: data.feedback.confidence * 100,
+      };
+      setInterviewHistory([...interviewHistory, newResult]);
+    } catch (error) {
+      console.error('Error submitting answer:', error);
+      // You might want to show an error message to the user here
+    }
     setIsLoading(false);
-  };
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: 'text' | 'speech' | 'video') => {
-    setInterviewType(newValue);
-  };
-
-  const startRecording = async () => {
-    setIsRecording(true);
-    if (interviewType === 'speech') {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorderRef.current = new MediaRecorder(stream);
-        mediaRecorderRef.current.start();
-        // Handle recording logic here
-      } catch (err) {
-        console.error('Error accessing microphone:', err);
-      }
-    } else if (interviewType === 'video') {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-        mediaRecorderRef.current = new MediaRecorder(stream);
-        mediaRecorderRef.current.start();
-        // Handle recording logic here
-      } catch (err) {
-        console.error('Error accessing camera and microphone:', err);
-      }
-    }
-  };
-
-  const stopRecording = () => {
-    setIsRecording(false);
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      // Handle stopping recording and processing the recorded data
-    }
   };
 
   useEffect(() => {
     fetchNextQuestion();
   }, []);
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: true,
+        video: mode === 'video'
+      });
+      
+      if (mode === 'video' && videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
   const renderProgressChart = () => {
     const chartData = interviewHistory.map((result, index) => ({
       name: `Interview ${index + 1}`,
-      score: result.score
+      score: result.score,
     }));
 
     return (
@@ -135,17 +154,17 @@ const InterviewPractice: React.FC = () => {
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>Interview Practice</Typography>
-      <Tabs value={interviewType} onChange={handleTabChange} sx={{ mb: 2 }}>
+      <Tabs value={mode} onChange={(_, newValue) => setMode(newValue)} sx={{ mb: 2 }}>
         <Tab label="Text" value="text" />
-        <Tab label="Speech" value="speech" icon={<MicIcon />} iconPosition="start" />
-        <Tab label="Video" value="video" icon={<VideocamIcon />} iconPosition="start" />
+        <Tab label="Voice" value="voice" />
+        <Tab label="Video" value="video" />
       </Tabs>
       {isLoading ? (
         <CircularProgress />
       ) : currentQuestion ? (
         <Paper elevation={3} sx={{ p: 2, mb: 2 }}>
           <Typography variant="h6" gutterBottom>{currentQuestion.text}</Typography>
-          {interviewType === 'text' && (
+          {mode === 'text' ? (
             <TextField
               fullWidth
               multiline
@@ -155,34 +174,21 @@ const InterviewPractice: React.FC = () => {
               onChange={(e) => setUserAnswer(e.target.value)}
               sx={{ mb: 2 }}
             />
-          )}
-          {interviewType === 'speech' && (
-            <Box sx={{ mb: 2 }}>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              {mode === 'video' && <video ref={videoRef} width="400" height="300" autoPlay muted />}
               <Button
                 variant="contained"
                 color={isRecording ? "secondary" : "primary"}
+                startIcon={isRecording ? <StopIcon /> : mode === 'voice' ? <MicIcon /> : <VideocamIcon />}
                 onClick={isRecording ? stopRecording : startRecording}
-                startIcon={<MicIcon />}
+                sx={{ mt: 2 }}
               >
                 {isRecording ? "Stop Recording" : "Start Recording"}
               </Button>
             </Box>
           )}
-          {interviewType === 'video' && (
-            <Box sx={{ mb: 2 }}>
-              <video ref={videoRef} width="100%" height="auto" autoPlay muted />
-              <Button
-                variant="contained"
-                color={isRecording ? "secondary" : "primary"}
-                onClick={isRecording ? stopRecording : startRecording}
-                startIcon={<VideocamIcon />}
-                sx={{ mt: 1 }}
-              >
-                {isRecording ? "Stop Recording" : "Start Recording"}
-              </Button>
-            </Box>
-          )}
-          <Button variant="contained" onClick={submitAnswer} disabled={!userAnswer.trim() && !isRecording}>
+          <Button variant="contained" onClick={submitAnswer} disabled={!userAnswer.trim() && !isRecording} sx={{ mt: 2 }}>
             Submit Answer
           </Button>
         </Paper>
