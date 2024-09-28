@@ -5,10 +5,10 @@ import {
   IsDate,
   IsOptional,
   IsString,
-  MaxDate
+  MaxDate,
 } from 'class-validator';
 
-export class UserProfileDto  {
+export class UserProfileDto {
   @IsString()
   @ApiProperty()
   @IsOptional()
@@ -23,7 +23,7 @@ export class UserProfileDto  {
   @IsDate()
   @MaxDate(new Date())
   @ApiProperty({
-    default: '07/07/1999'
+    default: '07/07/1999',
   })
   dateOfBirth: Date;
 
@@ -42,4 +42,9 @@ export class UserProfileDto  {
   @ApiProperty()
   @IsOptional()
   bio?: string;
+}
+export class GetUseProfileDTO {
+  @IsString()
+  @ApiProperty()
+  userId: string;
 }

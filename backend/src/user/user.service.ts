@@ -81,22 +81,22 @@ export class UserService {
     console.log(profileOptions);
     const avatar = await this.fileService.uploadFile(profileOptions);
 
-    if (provider == 'LOCAL') {
-      const otp = generateOTP(6);
-      await this.emailService.sendEmail({
-        description: `Your verification code is `,
-        to: user.email,
-        highlightedText: otp,
-        title: 'Sangwas Account verification',
-      });
-      await this.prismaService.token.create({
-        data: {
-          token: otp,
-          role: 'ACCOUNT_VERIFICATION',
-          userId: user.id,
-        },
-      });
-    }
+    // if (provider == 'LOCAL') {
+    //   const otp = generateOTP(6);
+    //   await this.emailService.sendEmail({
+    //     description: `Your verification code is `,
+    //     to: user.email,
+    //     highlightedText: otp,
+    //     title: 'Sangwas Account verification',
+    //   });
+    //   await this.prismaService.token.create({
+    //     data: {
+    //       token: otp,
+    //       role: 'ACCOUNT_VERIFICATION',
+    //       userId: user.id,
+    //     },
+    //   });
+    // }
 
     return user;
   }

@@ -1,13 +1,24 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Req } from '@nestjs/common';
 import { CareerService } from './career.service';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { PreferencesDTO } from './career.dto';
 
 @Controller('career')
+@ApiTags('carreer')
+@ApiBearerAuth()
 export class CareerController {
-    constructor(private readonly careerService: CareerService) {}
+  constructor(private readonly careerService: CareerService) {}
 
-    // This endpoint now expects an array of questions and answers
-    @Post('generate')
-    async generateCareerPath(@Body() {questionsAnswers}: { questionsAnswers: string[] }) {
-        return this.careerService.generateCareerPath(questionsAnswers);
-    }
+  @Post('generate')
+  async generateCareerPath(@Req() req) {
+    return this.careerService.generateCareerPath(req.user?.id);
+  }
+
+  @Post('add-preferneces')
+  async addPreferences(@Body() { questions }: PreferencesDTO, @Req() req) {
+    return this.careerService.savePreferences({
+      questions,
+      userId: req.user?.id,
+    });
+  }
 }
