@@ -1,10 +1,11 @@
-import { Controller, Post, Body, Get, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseInterceptors, UploadedFile, Query } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { ApiTags } from '@nestjs/swagger';
 import { ChatCourseDto, CreateCourseContentDto } from './dto/generateCourse.dto';
 import { MediaService } from './media.service';
 import { Express } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Public } from '@/shared/decorators';
 
 @Controller('course')
 @ApiTags("course")
@@ -23,9 +24,10 @@ export class CourseController {
     async onboarding(@Body() course: object[]) {
         return this.courseService.generateCareerRecommendations(course);
     }
+    @Public()
     @Get('interview/question')
-    async getInterviewQuestion(@Body() course: object[]) {
-        return this.courseService.generateInterviewQuestion(course);
+    async getInterviewQuestion(@Query() difficulty: string) {
+        return this.courseService.generateInterviewQuestion(difficulty??'medium');
     }
     @Post('interview/feedback')
     @UseInterceptors(FileInterceptor('file'))
