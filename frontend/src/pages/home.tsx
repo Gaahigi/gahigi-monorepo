@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Onboarding from '@/components/onboarding/Onboarding';
 import AppButton from '@/components/Button/AppButton';
 import { useRouter } from 'next/router';
+import withAuth from '../utils/withAuth';
 
 const SkillCard = ({ title, description, buttonText }: { title: string; description: string; buttonText: string }) => {
   const router = useRouter();
@@ -121,4 +122,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default withAuth(Home);

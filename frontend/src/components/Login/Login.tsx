@@ -3,17 +3,60 @@ import {
   Box,
   Typography,
   Grid,
-  Button,
   Container,
   useTheme,
   useMediaQuery,
 } from "@mui/material";
-import Input from "@/components/Input/Input";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+import { useRouter } from "next/router";
+import { useForm, Controller } from "react-hook-form";
 import AppInput from "@/components/Input/Input";
+import AppButton from "../Button/AppButton";
+import Link from "next/link";
+
+interface LoginFormData {
+  email: string;
+  password: string;
+}
 
 const Login: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const router = useRouter();
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>();
+
+  const loginMutation = useMutation({
+    mutationFn: (userData: LoginFormData) =>
+      fetch("http://localhost:4999/auth/signin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      }).then((res) => {
+        if (!res.ok) throw new Error("Login failed");
+        return res.json();
+      }),
+
+    onSuccess: (data) => {
+      // Store the token in localStorage or a secure cookie
+      localStorage.setItem("token", data.token);
+      toast.success("Login successful! Redirecting to home...");
+      setTimeout(() => router.push("/home"), 2000);
+    },
+    onError: (error: Error) => {
+      toast.error(`Login failed: ${error.message}`);
+    },
+  });
+
+  const onSubmit = (data: LoginFormData) => {
+    loginMutation.mutate(data);
+  };
 
   return (
     <Container maxWidth="lg">
@@ -53,7 +96,7 @@ const Login: React.FC = () => {
             </Box>
           </Grid>
 
-          {/* Right side - Sign up form */}
+          {/* Right side - Login form */}
           <Grid item xs={12} md={6}>
             <Box
               sx={{
@@ -64,29 +107,60 @@ const Login: React.FC = () => {
               }}
             >
               <Typography variant="h5" component="h2" gutterBottom>
-                Get started for free
+                Welcome Back
               </Typography>
               <Typography variant="subtitle2" gutterBottom>
-                Unlock premium career tools for free.
+                Login to access your account
               </Typography>
-              <Box component="form" noValidate sx={{ mt: 1 }}>
-                {/* <AppInput placeholder="Your full name" fullWidth margin="normal" /> */}
-                <AppInput
-                  placeholder="Enter  Your email"
-                  fullWidth
-                  margin="normal"
+              <Box
+                component="form"
+                noValidate
+                onSubmit={handleSubmit(onSubmit)}
+                sx={{ mt: 1 }}
+              >
+                <Controller
+                  name="email"
+                  control={control}
+                  rules={{
+                    required: "Email is required",
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: "Invalid email address",
+                    },
+                  }}
+                  render={({ field }) => (
+                    <AppInput
+                      {...field}
+                      placeholder="Enter your email"
+                      type="email"
+                      fullWidth
+                      margin="normal"
+                      error={!!errors.email}
+                      helperText={errors.email?.message}
+                    />
+                  )}
                 />
-                <AppInput
-                  placeholder="Enter  password"
-                  type="password"
-                  fullWidth
-                  margin="normal"
+                <Controller
+                  name="password"
+                  control={control}
+                  rules={{ required: "Password is required" }}
+                  render={({ field }) => (
+                    <AppInput
+                      {...field}
+                      placeholder="Enter password"
+                      type="password"
+                      fullWidth
+                      margin="normal"
+                      error={!!errors.password}
+                      helperText={errors.password?.message}
+                    />
+                  )}
                 />
-                {/* <Input placeholder="Confirm password" type="password" fullWidth margin="normal" /> */}
-                <Button
+                <AppButton
                   type="submit"
                   fullWidth
                   variant="contained"
+                  disabled={loginMutation.isLoading}
                   sx={{
                     mt: 3,
                     mb: 2,
@@ -98,60 +172,15 @@ const Login: React.FC = () => {
                     padding: "12px 0",
                   }}
                 >
-                  Login
-                </Button>
+                  {loginMutation.isLoading ? "Logging in..." : "Login"}
+                </AppButton>
                 <Typography
                   variant="body2"
                   align="center"
                   sx={{ mt: 1, mb: 2 }}
                 >
-                  New here ?{" "}
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    sx={{
-                      backgroundColor: "#FF5733",
-                      "&:hover": {
-                        backgroundColor: "#E64A2E",
-                      },
-                      borderRadius: "9999px",
-                    }}
-                  >
-                    Create Account
-                  </Button>
+                  New here? <Link href="/signup">Sign up</Link>
                 </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={6}>
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      sx={{
-                        backgroundColor: "#FF5733",
-                        "&:hover": {
-                          backgroundColor: "#E64A2E",
-                        },
-                        borderRadius: "9999px",
-                      }}
-                    >
-                      Google
-                    </Button>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      sx={{
-                        backgroundColor: "#FF5733",
-                        "&:hover": {
-                          backgroundColor: "#E64A2E",
-                        },
-                        borderRadius: "9999px",
-                      }}
-                    >
-                      Facebook
-                    </Button>
-                  </Grid>
-                </Grid>
               </Box>
             </Box>
           </Grid>
