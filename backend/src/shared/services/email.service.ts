@@ -23,21 +23,27 @@ interface EmailOptions {
 export class EmailService {
   public constructor(private configService: ConfigService) {}
   private getEmailTransporter() {
-    const transporter = createTransport({
-      host: this.configService.get('EMAIL_SERVER'),
-      port: 587,
-      secure: false, // true for 465, false for other ports
-      auth: {
-        user: this.configService.get('EMAIL_USERNAME'), // generated ethereal user
-        pass: this.configService.get('EMAIL_PASSWORD'), // generated ethereal password
+    const transporter = createTransport(
+      {
+        host: this.configService.get('MAIL_HOST'),
+        port: this.configService.get('MAIL_PORT'),
+
+        auth: {
+          user: this.configService.get('MAIL_USERNAME'),
+          pass: this.configService.get('MAIL_PASSWORD'),
+        },
+        tls: {
+          rejectUnauthorized: false,
+        },
       },
-    });
+      { debug: true },
+    );
     return transporter;
   }
 
   async sendEmail(options: EmailOptions) {
     if (!options.baseTitle) {
-      options.baseTitle = 'San community';
+      options.baseTitle = 'Gahigi AI';
     }
     if (!options.logoUrl) {
       options.logoUrl =
@@ -48,12 +54,13 @@ export class EmailService {
       options.frontendUrl = this.configService.get('FRONTEND_URL');
     }
     let transporter = this.getEmailTransporter();
+    console.log(transporter.options);
     let html = htmlEmailFormat(options);
     let result = await transporter.sendMail({
       subject: options.title,
       html,
       to: options.to,
-      sender: this.configService.get('EMAIL_USERNAME'),
+      sender: this.configService.get('MAIL_FROM'),
     });
     return result;
   }

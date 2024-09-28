@@ -1,18 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsString, Matches } from 'class-validator';
 
-
-export class UserSigninDTO  {
+export class UserSigninDTO {
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
-    default: 'user'
+    default: 'user',
   })
   password: string;
   @IsNotEmpty()
   @IsEmail()
   @ApiProperty({
-    default: 'user@example.com'
+    default: 'user@example.com',
   })
   email: string;
 }
@@ -21,58 +20,64 @@ export class ResetPassordDTO {
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
-    default: 'John'
+    default: 'John',
   })
-  username: string;
+  email: string;
 
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
-    default: 'NewPassword@01'
+    default: 'NewPassword@01',
   })
   password: string;
 
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
-    default: '112233'
+    default: '112233',
   })
   otp: string;
 }
-export class UserSignupDTO  {
+export class UserSignupDTO {
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
-    default: 'John'
+    default: 'John',
   })
   firstName: string;
 
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
-    default: 'Doe'
+    default: 'Doe',
   })
   lastName: string;
 
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
-    default: 'john1'
+    default: 'john1',
   })
-  username: string;
+  password: string;
+  @IsEmail()
+  @IsString()
+  @ApiProperty({
+    default: 'example@gmail.com',
+  })
+  email: string;
 }
 export class VerifyProfileDTO {
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
-    default: 'John'
+    default: 'John',
   })
-  username: string;
+  email: string;
 
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
-    default: '112233'
+    default: '112233',
   })
   otp: string;
 }
@@ -80,16 +85,16 @@ export class RequestOTP {
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
-    default: 'John'
+    default: 'John',
   })
-  username: string;
+  email: string;
 }
 export class NonceDTO {
-@IsNotEmpty()
-//two combined uuid with _
-@Matches(/^[\da-f_\-]{70,78}$/, {
+  @IsNotEmpty()
+  //two combined uuid with _
+  @Matches(/^[\da-f_\-]{70,78}$/, {
     message: 'Invalid nonce',
-})
-@ApiProperty()
-nonce: string;
+  })
+  @ApiProperty()
+  nonce: string;
 }
