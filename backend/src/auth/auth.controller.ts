@@ -27,8 +27,8 @@ import {
 
 import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
-import { generateOTP } from 'src/shared/functions/otp';
-import { Public } from 'src/shared/decorators';
+import { generateOTP } from '@/shared/functions/otp';
+import { Public } from '@/shared/decorators';
   @ApiTags('Authentication')
   @Controller('auth')
   export class AuthController {

@@ -8,11 +8,11 @@ import {
 
 
 import { FileProvider, User } from '@prisma/client';
-import { PrismaService } from 'src/shared/services/prisma.service';
-import { EmailService } from 'src/shared/services/email.service';
-import { FileService, UploadOptions } from 'src/shared/services/file.service';
-import { hashPassword } from 'src/shared/functions/hash';
-import { generateOTP } from 'src/shared/functions/otp';
+import { PrismaService } from '@/shared/services/prisma.service';
+import { EmailService } from '@/shared/services/email.service';
+import { FileService, UploadOptions } from '@/shared/services/file.service';
+import { hashPassword } from '@/shared/functions/hash';
+import { generateOTP } from '@/shared/functions/otp';
 import { UserProfileDto } from './dto';
 
 interface UpdateProfileOptions {

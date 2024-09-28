@@ -8,10 +8,10 @@ import {
 
   import { UserSigninDTO } from './dto';
   import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from 'src/shared/services/prisma.service';
+import { PrismaService } from '@/shared/services/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import { comparePassword, hashPassword } from 'src/shared/functions/hash';
-import { generateOTP } from 'src/shared/functions/otp';
+import { comparePassword, hashPassword } from '@/shared/functions/hash';
+import { generateOTP } from '@/shared/functions/otp';
   
   @Injectable()
   export class AuthService {

@@ -3,7 +3,7 @@ import {  UseGuards,SetMetadata, applyDecorators } from '@nestjs/common';
 
 // import { ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
 // import { Role } from '@prisma/client';
-// import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
+// import { JwtAuthGuard } from '@/auth/guards/jwt.guard';
 
 export const IS_PUBLIC_KEY = 'isPublic';
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);

@@ -20,4 +20,4 @@ RUN npm run build
 EXPOSE 3000
 
 # Step 8: Define the command to run the application
-CMD ["npm", "run", "start:prod"]
+CMD ["npm", "run", "start"]

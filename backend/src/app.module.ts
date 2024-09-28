@@ -4,15 +4,15 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { SharedModule } from './shared/shared.module';
 import { configValidationSchema } from './shared/config';
-import { AuthModule } from './auth/auth.module';
-import { UserModule } from './user/user.module';
+import { CareerModule } from './career/career.module';
 
 @Module({
   imports: [
     SharedModule,
     ConfigModule.forRoot({
     validationSchema: configValidationSchema
-  }), 
+  }),
+    CareerModule, 
   //  AuthModule, UserModule
     ],
   controllers: [AppController],
