@@ -1,23 +1,21 @@
-version: '3.8'
-
 services:
   frontend:
     build: ./frontend
     container_name: frontend
     ports:
-      - '3000:3000'
+      - "3000:3000"
     environment:
       - NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
     depends_on:
       - backend
     volumes:
       - ./frontend:/app
-      
+
   backend:
     build: ./backend
     container_name: backend
     ports:
-      - '4999:4999'
+      - "4999:4999"
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -27,7 +25,7 @@ services:
       - ./backend:/app
     depends_on:
       - db
-      
+
   db:
     image: postgres:latest
     container_name: postgres_db
@@ -39,7 +37,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - '5432:5432'
+      - "5432:5432"
 
 volumes:
   postgres_data:

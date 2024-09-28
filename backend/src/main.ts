@@ -9,6 +9,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: WinstonModule.createLogger(loggerConfig),
   });
+  app.enableCors()
 
   app.useGlobalPipes(
     new ValidationPipe({
