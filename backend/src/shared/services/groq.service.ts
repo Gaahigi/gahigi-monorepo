@@ -27,7 +27,7 @@ export class GroqService {
         })
     }
 
-    async sendPrompts({model="llama-3.2-90b-text-preview",...groqOptions}: GroqAPIOptions): Promise<any> {
+    async sendPrompts({model="llama-3.2-90b-text-preview",...groqOptions}: GroqAPIOptions): Promise<{choices: {message: {content: string}}[]}> {
         console.log(this.configService.get<string>('GROQ_API_KEY'))
         return this._groq.chat.completions.create({...groqOptions, model})
     }

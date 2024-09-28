@@ -11,12 +11,16 @@ import { JwtAuthGuard } from './auth/guards/jwt.guard';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { CourseModule } from './course/course.module';
 import { MediaService } from './course/media.service';
+import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
   imports: [
     SharedModule,
     ConfigModule.forRoot({
       validationSchema: configValidationSchema,
+    }),
+    MulterModule.register({
+      dest: './uploads',
     }),
     ThrottlerModule.forRoot([
       {

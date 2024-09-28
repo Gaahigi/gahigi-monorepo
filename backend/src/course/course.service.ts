@@ -182,4 +182,23 @@ export class CourseService {
       throw error;
     }
   }
+  async  generateInterviewQuestion(difficulty) {
+    const prompt = `Generate an interview question for a job interview. The difficulty level is ${difficulty}. Return the response as a JSON object with 'id', 'text', and 'difficulty' properties.`;
+  
+    try {
+      const response = await this.groqService.sendPrompts({
+        model: 'mixtral-8x7b-32768',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 1000,
+      });
+  
+      const content = response.choices[0].message.content;
+      console.log('AI response:', content);
+      return JSON.parse(content);
+    } catch (error) {
+      console.error('Error calling Groq API:', error.response?.data || error.message);
+      throw new Error('Failed to generate interview question');
+    }
+  }
 }
