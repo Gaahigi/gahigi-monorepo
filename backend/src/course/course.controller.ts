@@ -19,6 +19,6 @@ export class CourseController {
     }
     @Post('onboarding')
     async onboarding(@Body() course: any) {
-        return this.courseService.generateAIResponse(course);
+        return this.courseService.generateCareerRecommendations(course);
     }
 }
