@@ -41,14 +41,17 @@ const CoursePage: React.FC<CoursePageProps> = ({ courseTitle }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch("http://localhost:4999/course/content", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({ title: courseTitle }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/course/content`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ title: courseTitle }),
+        }
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch course content");
       }
@@ -94,14 +97,17 @@ const CoursePage: React.FC<CoursePageProps> = ({ courseTitle }) => {
 
     try {
       setIsChatting(true);
-      const response = await fetch("http://localhost:4999/course/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({ message: userInput, courseTitle }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/course/chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ message: userInput, courseTitle }),
+        }
+      );
       const data = await response.text();
       setIsChatting(false);
       setChatMessages([...newMessages, { role: "ai", content: data }]);

@@ -76,7 +76,7 @@ const InterviewPractice: React.FC = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        "http://localhost:4999/course/interview/question",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/course/interview/question`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -121,7 +121,7 @@ const InterviewPractice: React.FC = () => {
         mode: mode,
       };
       const response = await fetch(
-        "http://localhost:4999/course/interview/feedback",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/course/interview/feedback`,
         {
           method: "POST",
           body: JSON.stringify({
@@ -205,7 +205,7 @@ const InterviewPractice: React.FC = () => {
 
         try {
           const response = await fetch(
-            "http://localhost:4999/career/transcribe",
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/career/transcribe`,
             {
               method: "POST",
               body: formData,

@@ -61,7 +61,7 @@ const Home = () => {
   useEffect(() => {
     (async () => {
       const skillCardsResponse = await fetch(
-        "http://localhost:4999/course/recommendations",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/course/recommendations",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -81,7 +81,7 @@ const Home = () => {
 
   const handleOnboardingComplete = async (answers: Record<string, string>) => {
     try {
-      const response = await fetch("http://localhost:4999/course/onboarding", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/course/onboarding", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -94,7 +94,7 @@ const Home = () => {
 
       // Fetch skill cards from /course/recommendations
       const skillCardsResponse = await fetch(
-        "http://localhost:4999/course/recommendations",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/course/recommendations",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,

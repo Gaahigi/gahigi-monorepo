@@ -35,7 +35,7 @@ const Signup: React.FC = () => {
 
   const signupMutation = useMutation({
     mutationFn: (userData: SignupFormData) =>
-      fetch("http://localhost:4999/auth/signup", {
+      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

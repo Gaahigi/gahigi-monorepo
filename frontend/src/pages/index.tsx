@@ -117,7 +117,7 @@ const LandingPage: React.FC = () => {
           <Typography variant="h3" gutterBottom align="center">
             See Gahigi in Action
           </Typography>
-          <Box
+          {/* <Box
             sx={{
               position: "relative",
               paddingBottom: "56.25%",
@@ -139,7 +139,7 @@ const LandingPage: React.FC = () => {
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
-          </Box>
+          </Box> */}
           <Box sx={{ display: "flex", justifyContent: "center" }}>
             <Link href="/login" passHref>
               <Button
