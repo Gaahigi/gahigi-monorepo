@@ -41,7 +41,7 @@ export class GroqService {
     const fileStream = createReadStream(audioPath);
     return this._groq.audio.transcriptions.create({
       file: fileStream,
-      model: 'whisper-large-v3',
+      model: 'distil-whisper-large-v3-en',
     });
   }
   //   async textToAudio(text: string): Promise<Groq.Audio.TextToSpeech.TextToSpeech> {

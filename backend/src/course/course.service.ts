@@ -9,7 +9,16 @@ export class CourseService {
     private prismaService: PrismaService,
   ) {}
 
-  async generateInterviewFeedback(question: string, answer: string) {
+  async generateInterviewFeedback(question = 'None', answer = 'None') {
+    if (question === 'None' || answer === 'None') {
+      return {
+        overallAssessment: 'No feedback provided',
+        confidenceScore: 0,
+        suggestions: [],
+        keyStrengths: [],
+        areasForImprovement: [],
+      };
+    }
     try {
       const prompt = `You are an expert in providing feedback for job interviews. Provide feedback for the following question and answer:
       Question: ${question}
@@ -17,19 +26,22 @@ export class CourseService {
       const response = await this.groqService.sendPrompts({
         model: 'mixtral-8x7b-32768',
         messages: [
+          { role: 'system', content: 'You are hiring expert,' },
           {
             role: 'system',
-            content: `You are a JSON API and you are an expert in providing feedback for job interviews. Return a valid JSON object with the following structure:
+            content: `You are a JSON API that provides feedback for job interviews. Always return a valid JSON object with the following format:
 {
-"overallAssessment": "string",
-"confidenceScore": number,
-"suggestions": ["string", "string", "string"],
-"communicationSkills": "string",
-"bodyLanguage": "string",
-"keyStrengths": ["string", "string"],
-"areasForImprovement": ["string", "string"]
+  "overallAssessment": "string",
+  "confidenceScore": number,
+  "suggestions": ["string", "string", "string"],
+  "keyStrengths": ["string", "string"],
+  "areasForImprovement": ["string", "string"]
 }
-Ensure all fields are present and properly formatted.`,
+Rules:
+1. confidenceScore, is confidence that user can be hired, must be a float between 0 and 100.
+2. All fields must be present.
+3. If there are no suggestions, keyStrengths, or areasForImprovement, use empty arrays [].
+4. Ensure the response is always a valid JSON object.`,
           },
           { role: 'user', content: prompt },
         ],
@@ -274,21 +286,17 @@ Ensure the content is engaging, well-structured, and suitable for an online lear
       });
     return recommendations;
   }
-  async generateInterviewQuestion(topic: string) {
-    const prompt = `. Return 5 elements list of interview questions for a job interview topic ${topic}.  . 
-    The questions should be in the following format:
-    [
-      {
-        "id": "1",
-        "text": "What is your experience with React?",
-        "difficulty": "medium"
+  async generateInterviewQuestion(userId: string) {
+    const questions = await this.prismaService.userPreferenceQuestion.findMany({
+      where: {
+        userId,
       },
-      {
-        "id": "2",
-        "text": "Explain the difference between a class and a function component in React.",
-        "difficulty": "medium"
-      }
-    ]`;
+    });
+    const prompt = `Based on the user's preferences  questions:
+     ${questions
+       .map((question) => question.question + ' : ' + question.answer)
+       .join(' ')}`;
+    console.log(prompt);
 
     try {
       const response = await this.groqService.sendPrompts({
@@ -296,7 +304,29 @@ Ensure the content is engaging, well-structured, and suitable for an online lear
         messages: [
           {
             role: 'system',
-            content: 'You are a JSON API that return valid JSON only',
+            content: `You are a JSON API that returns valid JSON only. Generate a list of at least 3 interview questions based on the user's preferences. The response must strictly adhere to the following format and rules:
+
+[
+  {
+    "text": "What is your experience with [relevant technology]?",
+    "difficulty": "easy|medium|hard"
+  },
+  {
+    "text": "Can you describe a challenging project you've worked on using [relevant skill]?",
+    "difficulty": "easy|medium|hard"
+  },
+  ...
+]
+
+Rules:
+1. The response must be a valid JSON array.
+2. Each question object must have exactly two properties: "text" and "difficulty".
+3. The "text" property must be a string containing the interview question.
+4. The "difficulty" property must be one of these exact strings: "easy", "medium", or "hard".
+5. Generate at least 3 questions, but no more than 5.
+6. Ensure questions are relevant to the user's background and preferences.
+7. Vary the difficulty levels across the questions.
+8. Do not include any additional properties or explanations outside the JSON structure.`,
           },
           { role: 'user', content: prompt },
         ],

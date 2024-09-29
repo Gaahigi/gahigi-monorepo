@@ -47,31 +47,32 @@ export class CourseController {
       req.user.id,
     );
   }
-  @Public()
   @Get('interview/question')
-  async getInterviewQuestion(@Query() difficulty: string) {
-    return this.courseService.generateInterviewQuestion(difficulty ?? 'medium');
+  async getInterviewQuestion(@Query() difficulty: string, @Req() req) {
+    return this.courseService.generateInterviewQuestion(req.user.id);
   }
   @Post('interview/feedback')
-  async provideFeedback(
-    @Body() body: any,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
+  async provideFeedback(@Body() body: { question: string; answer: string }) {
     try {
+      if (!body || !body.question || !body.answer) {
+        throw new Error(
+          'Invalid request body. Both question and answer are required.',
+        );
+      }
+
       const { question, answer } = body;
-      console.log(question, answer);
 
       const feedback = await this.courseService.generateInterviewFeedback(
         question,
         answer,
       );
 
-      // Note: Difficulty adjustment logic removed as it seems to be out of scope for this controller
-
       return feedback;
     } catch (error) {
       console.error('Error generating interview feedback:', error);
-      throw new Error('Internal server error: ' + error.message);
+      throw new Error(
+        'Failed to generate interview feedback: ' + error.message,
+      );
     }
   }
 }
