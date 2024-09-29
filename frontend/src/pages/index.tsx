@@ -11,7 +11,6 @@ import {
   CardContent,
   CardMedia,
   useMediaQuery,
-  Theme,
   useTheme,
 } from "@mui/material";
 import { Link as ScrollLink } from "react-scroll";

@@ -3,13 +3,13 @@ import {
   Box,
   Container,
   Typography,
-  Button,
   Card,
   CardContent,
   Grid,
   AppBar,
   Toolbar,
   Link as MuiLink,
+  CircularProgress,
 } from "@mui/material";
 import Link from "next/link";
 import Onboarding from "@/components/onboarding/Onboarding";
@@ -58,6 +58,8 @@ const Home = () => {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [loading, setLoading] = useState(true);
   const [skillCards, setSkillCards] = useState([]);
+  const [onboardingLoading, setOnboardingLoading] = useState(false);
+
   useEffect(() => {
     (async () => {
       const skillCardsResponse = await fetch(
@@ -80,6 +82,7 @@ const Home = () => {
   }, []);
 
   const handleOnboardingComplete = async (answers: Record<string, string>) => {
+    setOnboardingLoading(true);
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/course/onboarding`,
@@ -111,11 +114,35 @@ const Home = () => {
       console.error("Error completing onboarding:", error);
       // Handle error (e.g., show an error message to the user)
       setSkillCards([]);
+    } finally {
+      setOnboardingLoading(false);
     }
   };
 
   if (!onboardingComplete && !loading) {
-    return <Onboarding onComplete={handleOnboardingComplete} />;
+    return (
+      <>
+        <Onboarding onComplete={handleOnboardingComplete} />
+        {onboardingLoading && (
+          <Box
+            sx={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              zIndex: 9999,
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        )}
+      </>
+    );
   }
 
   return (

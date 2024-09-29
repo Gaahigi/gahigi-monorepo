@@ -62,7 +62,6 @@ const Login: React.FC = () => {
     <Container maxWidth="lg">
       <Box sx={{ mt: 4, mb: 4 }}>
         <Grid container spacing={4}>
-          {/* Left side - Career Booster info */}
           <Grid item xs={12} md={6}>
             <Box
               sx={{
@@ -83,7 +82,6 @@ const Login: React.FC = () => {
                   Discover tailored career advice and resources.
                 </Typography>
               </Box>
-              {/* You would replace this with your actual image */}
               <Box
                 component="img"
                 src="/illustration.png"
@@ -96,7 +94,6 @@ const Login: React.FC = () => {
             </Box>
           </Grid>
 
-          {/* Right side - Login form */}
           <Grid item xs={12} md={6}>
             <Box
               sx={{

@@ -109,8 +109,15 @@ const CoursePage: React.FC<CoursePageProps> = ({ courseTitle }) => {
         }
       );
       const data = await response.text();
+      if (!response.ok) {
+        setChatMessages([
+          ...newMessages,
+          { role: "ai", content: "Please try again in 2M" },
+        ]);
+      } else {
+        setChatMessages([...newMessages, { role: "ai", content: data }]);
+      }
       setIsChatting(false);
-      setChatMessages([...newMessages, { role: "ai", content: data }]);
     } catch (error) {
       console.error("Error sending message:", error);
     }
