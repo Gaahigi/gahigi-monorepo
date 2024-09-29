@@ -294,8 +294,11 @@ Ensure the content is engaging, well-structured, and suitable for an online lear
     });
     const prompt = `Based on the user's preferences  questions:
      ${questions
-       .map((question) => question.question + ' : ' + question.answer)
-       .join(' ')}`;
+       .map(
+         (question) =>
+           'Question:' + question.question + ' Answer:' + question.answer,
+       )
+       .join('\n')} create 4 interview questions`;
     console.log(prompt);
 
     try {
