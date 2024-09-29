@@ -1,12 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Container, Typography, Button, Card, CardContent, Grid, AppBar, Toolbar, Link as MuiLink } from '@mui/material';
-import Link from 'next/link';
-import Onboarding from '@/components/onboarding/Onboarding';
-import AppButton from '@/components/Button/AppButton';
-import { useRouter } from 'next/router';
-import withAuth from '../utils/withAuth';
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Container,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  Grid,
+  AppBar,
+  Toolbar,
+  Link as MuiLink,
+} from "@mui/material";
+import Link from "next/link";
+import Onboarding from "@/components/onboarding/Onboarding";
+import AppButton from "@/components/Button/AppButton";
+import { useRouter } from "next/router";
+import withAuth from "../utils/withAuth";
 
-const SkillCard = ({ title, description, buttonText }: { title: string; description: string; buttonText: string }) => {
+const SkillCard = ({
+  title,
+  description,
+  buttonText,
+}: {
+  title: string;
+  description: string;
+  buttonText: string;
+}) => {
   const router = useRouter();
 
   const handleStartCourse = () => {
@@ -14,7 +33,14 @@ const SkillCard = ({ title, description, buttonText }: { title: string; descript
   };
 
   return (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+    <Card
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+      }}
+    >
       <CardContent>
         <Typography variant="h6" component="h3" gutterBottom>
           {title}
@@ -22,9 +48,7 @@ const SkillCard = ({ title, description, buttonText }: { title: string; descript
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           {description}
         </Typography>
-        <AppButton  onClick={handleStartCourse}>
-          {buttonText}
-        </AppButton>
+        <AppButton onClick={handleStartCourse}>{buttonText}</AppButton>
       </CardContent>
     </Card>
   );
@@ -32,46 +56,103 @@ const SkillCard = ({ title, description, buttonText }: { title: string; descript
 
 const Home = () => {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [skillCards, setSkillCards] = useState([]);
+  useEffect(() => {
+    (async () => {
+      const skillCardsResponse = await fetch(
+        "http://localhost:4999/course/recommendations",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      const skillCardsData = await skillCardsResponse.json();
+      // Ensure that skillCards is always an array
+      if (skillCardsData.length > 0) {
+        setOnboardingComplete(true);
+        setLoading(false);
+      }
+      setLoading(false);
+      setSkillCards(Array.isArray(skillCardsData) ? skillCardsData : []);
+    })();
+  }, []);
 
   const handleOnboardingComplete = async (answers: Record<string, string>) => {
     try {
-      const response = await fetch('http://localhost:5000/api/onboarding/complete', {
-        method: 'POST',
+      const response = await fetch("http://localhost:4999/course/onboarding", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(answers),
       });
-      const data = await response.json();
-      // Ensure that skillCards is always an array
-      setSkillCards(Array.isArray(data) ? data : []);
+      await response.json();
       setOnboardingComplete(true);
+
+      // Fetch skill cards from /course/recommendations
+      const skillCardsResponse = await fetch(
+        "http://localhost:4999/course/recommendations",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      const skillCardsData = await skillCardsResponse.json();
+      // Ensure that skillCards is always an array
+      setSkillCards(Array.isArray(skillCardsData) ? skillCardsData : []);
     } catch (error) {
-      console.error('Error completing onboarding:', error);
+      console.error("Error completing onboarding:", error);
       // Handle error (e.g., show an error message to the user)
       setSkillCards([]);
     }
   };
 
-  if (!onboardingComplete) {
+  if (!onboardingComplete && !loading) {
     return <Onboarding onComplete={handleOnboardingComplete} />;
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       <AppBar position="static" color="default" elevation={0}>
-        <Toolbar sx={{ justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Toolbar sx={{ justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center" }}>
             {/* <img src="/logo.png" alt="GahigiCareerCoach Logo" style={{ height: 32, marginRight: 8 }} /> */}
             <Typography variant="h6" component="div">
               Gahigi CareerCoach
             </Typography>
           </Box>
           <Box component="nav">
-            <MuiLink underline="none" component={Link} href="/" color="inherit" sx={{ mx: 1 }}>Home</MuiLink>
-            <MuiLink underline="none" component={Link} href="/interview-practice" color="inherit" sx={{ mx: 1 }}>Interview Practice</MuiLink>
-            <MuiLink underline="none" component={Link} href="/skill-building" color="inherit" sx={{ mx: 1 }}>Skill-building Exercises</MuiLink>
+            <MuiLink
+              underline="none"
+              component={Link}
+              href="/"
+              color="inherit"
+              sx={{ mx: 1 }}
+            >
+              Home
+            </MuiLink>
+            <MuiLink
+              underline="none"
+              component={Link}
+              href="/interview-practice"
+              color="inherit"
+              sx={{ mx: 1 }}
+            >
+              Interview Practice
+            </MuiLink>
+            <MuiLink
+              underline="none"
+              component={Link}
+              href="/skill-building"
+              color="inherit"
+              sx={{ mx: 1 }}
+            >
+              Skill-building Exercises
+            </MuiLink>
           </Box>
         </Toolbar>
       </AppBar>
@@ -79,13 +160,15 @@ const Home = () => {
       <Container component="main" sx={{ flexGrow: 1, py: 4 }}>
         <Grid container spacing={3}>
           <Grid item xs={12}>
-            <Card sx={{ bgcolor: '#FFF1F0', mb: 3 }}>
+            <Card sx={{ bgcolor: "#FFF1F0", mb: 3 }}>
               <CardContent>
                 <Typography variant="h5" component="h2" gutterBottom>
                   Welcome to Gahigi CareerCoach
                 </Typography>
                 <Typography variant="body1">
-                  Based on your responses, we've customized some skill-building exercises for you. Get started with these to boost your career prospects!
+                  Based on your responses, we've customized some skill-building
+                  exercises for you. Get started with these to boost your career
+                  prospects!
                 </Typography>
               </CardContent>
             </Card>
@@ -102,7 +185,7 @@ const Home = () => {
         </Grid>
       </Container>
 
-      <Box component="footer" sx={{ bgcolor: '#FFF1F0', py: 3, mt: 'auto' }}>
+      <Box component="footer" sx={{ bgcolor: "#FFF1F0", py: 3, mt: "auto" }}>
         <Container>
           <Grid container justifyContent="space-between" alignItems="center">
             <Grid item>
@@ -111,9 +194,33 @@ const Home = () => {
               </Typography>
             </Grid>
             <Grid item>
-              <MuiLink underline="none" component={Link} href="/privacy" color="inherit" sx={{ mx: 1 }}>Privacy Policy</MuiLink>
-              <MuiLink underline="none" component={Link} href="/terms" color="inherit" sx={{ mx: 1 }}>Terms of Service</MuiLink>
-              <MuiLink underline="none" component={Link} href="/contact" color="inherit" sx={{ mx: 1 }}>Contact Us</MuiLink>
+              <MuiLink
+                underline="none"
+                component={Link}
+                href="/privacy"
+                color="inherit"
+                sx={{ mx: 1 }}
+              >
+                Privacy Policy
+              </MuiLink>
+              <MuiLink
+                underline="none"
+                component={Link}
+                href="/terms"
+                color="inherit"
+                sx={{ mx: 1 }}
+              >
+                Terms of Service
+              </MuiLink>
+              <MuiLink
+                underline="none"
+                component={Link}
+                href="/contact"
+                color="inherit"
+                sx={{ mx: 1 }}
+              >
+                Contact Us
+              </MuiLink>
             </Grid>
           </Grid>
         </Container>
