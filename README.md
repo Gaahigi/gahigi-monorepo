@@ -29,9 +29,9 @@ Gahigi is a virtual mentor designed to help young professionals in Rwanda kick-s
 
 #### Gahigi aims to:
 
-1 . Boost confidence among young professionals.
-2 . Enhance employability through practical skill-building.
-3 .  Provide personalized career guidance to help users take their first steps in the professional world.
+1. Boost confidence among young professionals.
+2. Enhance employability through practical skill-building.
+3.  Provide personalized career guidance to help users take their first steps in the professional world.
 
 ## Technologies Used
 
