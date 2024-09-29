@@ -35,17 +35,19 @@ interface Question {
 }
 
 interface Feedback {
-  content: string;
-  confidence: number;
+  overallAssessment: string;
+  confidenceScore: number;
   suggestions: string[];
+  keyStrengths: string[];
+  areasForImprovement: string[];
 }
 
 interface InterviewResult {
-  date: string;
-  question: string;
-  answer: string;
-  feedback: Feedback;
-  score: number;
+  overallAssessment: string;
+  confidenceScore: number;
+  suggestions: string[];
+  keyStrengths: string[];
+  areasForImprovement: string[];
 }
 
 type InterviewMode = "text" | "voice" | "video";
@@ -74,7 +76,12 @@ const InterviewPractice: React.FC = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        "http://localhost:4999/course/interview/question"
+        "http://localhost:4999/course/interview/question",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
       );
       const data = await response.json();
       setQuestions(data);
@@ -91,24 +98,30 @@ const InterviewPractice: React.FC = () => {
     if (nextIndex < questions.length) {
       setCurrentQuestion(questions[nextIndex]);
       setCurrentQuestionIndex(nextIndex);
+      // Reset user answer and feedback
+      setUserAnswer("");
+      setFeedback(null);
+      // Reset audio/video related states
+      setAudioUrl(null);
+      setTranscribedText("");
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
     } else {
       // All questions have been answered
-      console.log("All questions completed");
-      // You might want to add some UI feedback here
+      toast.info("You've completed all questions!");
     }
   };
 
   const submitAnswer = async () => {
     setIsSubmitting(true);
     try {
-      // send answer to backend
       const answer = {
         answer: userAnswer,
         mode: mode,
       };
       const response = await fetch(
         "http://localhost:4999/course/interview/feedback",
-
         {
           method: "POST",
           body: JSON.stringify({
@@ -116,6 +129,7 @@ const InterviewPractice: React.FC = () => {
             answer: userAnswer,
           }),
           headers: {
+            "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
@@ -127,13 +141,10 @@ const InterviewPractice: React.FC = () => {
       }
 
       const data = await response.json();
-      if (!data.feedback || typeof data.feedback.confidence !== "number") {
-        throw new Error("Invalid feedback received from server");
-      }
 
-      setFeedback(data.feedback);
+      setFeedback(data);
 
-      // setInterviewHistory([...interviewHistory, newResult]);
+      setInterviewHistory([...interviewHistory, data]);
       toast.success("Answer submitted successfully!");
     } catch (error) {
       console.error("Error submitting answer:", error);
@@ -148,6 +159,12 @@ const InterviewPractice: React.FC = () => {
 
   const startRecording = async () => {
     try {
+      if (isRecording) {
+        await stopRecording();
+      }
+
+      audioChunksRef.current = [];
+
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: mode === "video",
@@ -165,8 +182,11 @@ const InterviewPractice: React.FC = () => {
       };
       mediaRecorderRef.current.start();
       setIsRecording(true);
+      setAudioUrl(null);
+      setTranscribedText("");
     } catch (error) {
       console.error("Error starting recording:", error);
+      toast.error("Failed to start recording. Please try again.");
     }
   };
 
@@ -180,21 +200,27 @@ const InterviewPractice: React.FC = () => {
         const url = URL.createObjectURL(audioBlob);
         setAudioUrl(url);
 
-        // Transcribe audio
         const formData = new FormData();
         formData.append("audio", audioBlob, "audio.wav");
 
-        const response = await fetch(
-          "http://localhost:4999/career/transcribe",
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-        const data = await response.text();
-
-        setTranscribedText(data);
-        setUserAnswer(data); // Set the transcribed text as the user answer
+        try {
+          const response = await fetch(
+            "http://localhost:4999/career/transcribe",
+            {
+              method: "POST",
+              body: formData,
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+          const data = await response.text();
+          setTranscribedText(data);
+          setUserAnswer(data);
+        } catch (error) {
+          console.error("Error transcribing audio:", error);
+          toast.error("Failed to transcribe audio. Please try again.");
+        }
       };
 
       setIsRecording(false);
@@ -211,7 +237,7 @@ const InterviewPractice: React.FC = () => {
   const renderProgressChart = () => {
     const chartData = interviewHistory.map((result, index) => ({
       name: `Interview ${index + 1}`,
-      score: result.score,
+      score: result.confidenceScore,
     }));
 
     return (
@@ -303,31 +329,38 @@ const InterviewPractice: React.FC = () => {
                 </Button>
               )}
               {transcribedText && (
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={4}
-                  variant="outlined"
-                  value={transcribedText}
-                  onChange={(e) => setUserAnswer(e.target.value)}
-                  sx={{ mt: 2, mb: 2 }}
-                />
+                <Button
+                  variant="contained"
+                  onClick={submitAnswer}
+                  disabled={
+                    (!userAnswer.trim() && !isRecording) || isSubmitting
+                  }
+                  sx={{ mt: 2 }}
+                >
+                  {isSubmitting ? (
+                    <CircularProgress size={24} color="inherit" />
+                  ) : (
+                    "Submit Answer"
+                  )}
+                </Button>
               )}
             </Box>
           )}
 
-          <Button
-            variant="contained"
-            onClick={submitAnswer}
-            disabled={(!userAnswer.trim() && !isRecording) || isSubmitting}
-            sx={{ mt: 2 }}
-          >
-            {isSubmitting ? (
-              <CircularProgress size={24} color="inherit" />
-            ) : (
-              "Submit Answer"
-            )}
-          </Button>
+          {!feedback && (
+            <Button
+              variant="contained"
+              onClick={submitAnswer}
+              disabled={(!userAnswer.trim() && !isRecording) || isSubmitting}
+              sx={{ mt: 2 }}
+            >
+              {isSubmitting ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Submit Answer"
+              )}
+            </Button>
+          )}
         </Paper>
       ) : null}
       {feedback && (
@@ -335,10 +368,35 @@ const InterviewPractice: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             Feedback
           </Typography>
-          <Typography>{feedback.content}</Typography>
+          <Typography>{feedback.overallAssessment}</Typography>
           <Typography variant="subtitle1" sx={{ mt: 1 }}>
-            Confidence Score: {(feedback.confidence * 100).toFixed(0)}%
+            Confidence Score: {feedback.confidenceScore?.toFixed(0)}%
           </Typography>
+
+          {/* Add Key Strengths section */}
+          <Typography variant="subtitle1" sx={{ mt: 1 }}>
+            Key Strengths:
+          </Typography>
+          <List>
+            {feedback.keyStrengths.map((strength, index) => (
+              <ListItem key={index}>
+                <ListItemText primary={strength} />
+              </ListItem>
+            ))}
+          </List>
+
+          {/* Add Areas for Improvement section */}
+          <Typography variant="subtitle1" sx={{ mt: 1 }}>
+            Areas for Improvement:
+          </Typography>
+          <List>
+            {feedback.areasForImprovement.map((area, index) => (
+              <ListItem key={index}>
+                <ListItemText primary={area} />
+              </ListItem>
+            ))}
+          </List>
+
           <Typography variant="subtitle1" sx={{ mt: 1 }}>
             Suggestions:
           </Typography>
@@ -349,6 +407,7 @@ const InterviewPractice: React.FC = () => {
               </ListItem>
             ))}
           </List>
+
           <Button variant="contained" onClick={goToNextQuestion} sx={{ mt: 2 }}>
             Next Question
           </Button>
@@ -365,7 +424,7 @@ const InterviewPractice: React.FC = () => {
               Your average score:{" "}
               {(
                 interviewHistory.reduce(
-                  (sum, result) => sum + result.score,
+                  (sum, result) => sum + result.confidenceScore,
                   0
                 ) / interviewHistory.length
               ).toFixed(2)}
@@ -385,10 +444,10 @@ const InterviewPractice: React.FC = () => {
           {interviewHistory.map((item, index) => (
             <ListItem key={index}>
               <ListItemText
-                primary={`${item.date}: ${item.question}`}
-                secondary={`Score: ${item.score.toFixed(
+                primary={`${item.suggestions}: ${item}`}
+                secondary={`Score: ${item.confidenceScore.toFixed(
                   2
-                )} | Feedback: ${item.feedback.content.substring(0, 50)}...`}
+                )} | Feedback: ${item.overallAssessment.substring(0, 50)}...`}
               />
             </ListItem>
           ))}
