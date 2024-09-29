@@ -9,43 +9,35 @@ export class CourseService {
     private prismaService: PrismaService,
   ) {}
 
-  async generateInterviewFeedback(
-    questionId: string,
-    answer: string,
-    difficulty: string,
-    audioAnalysis?: any,
-    videoAnalysis?: any,
-  ) {
-    let prompt = `Analyze the following interview answer for a ${difficulty} difficulty question:
-        "${answer}"
-        `;
-    if (audioAnalysis) {
-      prompt += `Audio analysis: ${JSON.stringify(audioAnalysis)}
-          `;
-    }
-
-    if (videoAnalysis) {
-      prompt += `Video analysis: ${JSON.stringify(videoAnalysis)}
-          `;
-    }
-
-    prompt += `Provide feedback, including:
-        1. Overall assessment
-        2. Confidence score (0-1)
-        3. 2-3 suggestions for improvement
-        4. Comments on tone of voice and body language (if applicable)
-        Return the response as a JSON object with 'content', 'confidence', and 'suggestions' properties.`;
-
+  async generateInterviewFeedback(question: string, answer: string) {
     try {
+      const prompt = `You are an expert in providing feedback for job interviews. Provide feedback for the following question and answer:
+      Question: ${question}
+      Answer: ${answer}`;
       const response = await this.groqService.sendPrompts({
         model: 'mixtral-8x7b-32768',
-        messages: [{ role: 'user', content: prompt }],
+        messages: [
+          {
+            role: 'system',
+            content: `You are a JSON API and you are an expert in providing feedback for job interviews. Return a valid JSON object with the following structure:
+{
+"overallAssessment": "string",
+"confidenceScore": number,
+"suggestions": ["string", "string", "string"],
+"communicationSkills": "string",
+"bodyLanguage": "string",
+"keyStrengths": ["string", "string"],
+"areasForImprovement": ["string", "string"]
+}
+Ensure all fields are present and properly formatted.`,
+          },
+          { role: 'user', content: prompt },
+        ],
         temperature: 0.7,
         max_tokens: 300,
       });
 
       const content = response.choices[0].message.content;
-      console.log('AI response:', content);
       return JSON.parse(content);
     } catch (error) {
       console.error(
@@ -60,7 +52,17 @@ export class CourseService {
     message: string;
     courseTitle: string;
   }): Promise<string> {
-    const prompt = `You are an AI assistant for the course "${data.courseTitle}". Respond to the following user message: "${data.message}"`;
+    const prompt = `As an advanced AI expert specializing in "${data.courseTitle}", provide a comprehensive yet concise response to the following query: "${data.message}"
+
+Your response should:
+1. Demonstrate deep subject matter expertise
+2. Use clear, accessible language suitable for learners
+3. Incorporate relevant examples or analogies when appropriate
+4. Address any underlying concepts or principles related to the query
+5. Suggest additional areas of exploration if applicable
+6. The answer should be very short
+
+Respond in plain text, optimized for readability and understanding. `;
 
     const response = await this.groqService.sendPrompts({
       model: 'mixtral-8x7b-32768',
@@ -72,39 +74,96 @@ export class CourseService {
     return response.choices[0].message.content;
   }
 
-  async generateCourseContent(courseTitle: string): Promise<any> {
-    const prompt = `Generate a detailed course outline for "${courseTitle}". Include 5 main steps, each with a label and description. Also, provide an introduction to the course and a conclusion.`;
-
+  async generateCourseContent(
+    courseTitle: string,
+    userId?: string,
+  ): Promise<any> {
     try {
-      const response = await this.groqService.sendPrompts({
+      // First loop: Get course outline
+      const outlinePrompt = `As a JSON API, generate a comprehensive course outline for "${courseTitle}". Return a valid JSON array with exactly 5 main topics in the following format:
+[
+  {
+    "title": "Main Topic Title",
+    "description": "A concise 2-3 sentence summary of the topic"
+  }
+]
+Ensure each topic is distinct, covers a key aspect of the course, and follows a logical progression. The descriptions should be informative yet brief, giving a clear overview of what will be covered in each section.`;
+      const sections = await this.prismaService.courseSection.findMany({
+        where: {
+          courseTitle,
+        },
+      });
+      if (sections.length > 0) {
+        return sections.map((section) => ({
+          title: section.sectionTitle,
+          description: section.sectionContent,
+          content: section.sectionContent,
+        }));
+      }
+      const outlineResponse = await this.groqService.sendPrompts({
         model: 'mixtral-8x7b-32768',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7,
+        messages: [{ role: 'user', content: outlinePrompt }],
+        temperature: 0.5,
         max_tokens: 1000,
       });
 
-      console.log('Raw API response:', JSON.stringify(response, null, 2));
+      const outline = JSON.parse(outlineResponse.choices[0].message.content);
 
-      if (
-        response &&
-        response.choices &&
-        response.choices[0] &&
-        response.choices[0].message
-      ) {
-        const content = response.choices[0].message.content;
-        console.log('API response content:', content);
+      // Second loop: Get detailed content for each outline item
+      const detailedCourse = await Promise.all(
+        outline.map(async (item) => {
+          const contentPrompt = `As an expert educator, provide comprehensive content for the course topic "${item.title}". Your response should:
+1. Be in Markdown format
+2. Be equivalent to at least one full page of text (approximately 500 words)
+3. Include a brief introduction to the topic
+4. Cover key concepts and theories related to the topic
+5. Provide at least 2 practical examples or case studies
+6. Include code snippets or technical details if relevant
+7. End with a summary and 2-3 discussion questions
+Ensure the content is engaging, well-structured, and suitable for an online learning environment.`;
 
-        const steps = this.processContentIntoSteps(content);
-        console.log('Processed steps:', JSON.stringify(steps, null, 2));
-        return steps;
-      } else {
-        console.error('Unexpected API response structure:', response);
-        return [];
-      }
+          const section = await this.prismaService.courseSection.findFirst({
+            where: {
+              courseTitle: courseTitle,
+              sectionTitle: item.title,
+            },
+          });
+          if (section) {
+            return {
+              title: section.sectionTitle,
+              description: section.sectionContent,
+              content: section.sectionContent,
+            };
+          }
+
+          const contentResponse = await this.groqService.sendPrompts({
+            model: 'mixtral-8x7b-32768',
+            messages: [{ role: 'user', content: contentPrompt }],
+            temperature: 0.7,
+            max_tokens: 2048,
+          });
+
+          await this.prismaService.courseSection.create({
+            data: {
+              courseTitle: courseTitle,
+              sectionTitle: item.title,
+              userId,
+              sectionContent: contentResponse.choices[0].message.content,
+            },
+          });
+
+          return {
+            title: item.title,
+            description: item.description,
+            content: contentResponse.choices[0].message.content,
+          };
+        }),
+      );
+
+      return detailedCourse;
     } catch (error) {
       console.error('Error in generateCourseContent:', error);
       console.error('Error stack:', error.stack);
-      console.error('Full response:', JSON.stringify(error.response, null, 2));
       throw error;
     }
   }
@@ -128,8 +187,13 @@ export class CourseService {
     }
   }
 
-  async generateCareerRecommendations(answers) {
+  async generateCareerRecommendations(answers: object, userId: string) {
     try {
+      const recomendations =
+        (await this.prismaService.careerRecomendation.findMany({})) ?? [];
+      if (recomendations?.length > 0) {
+        await this.prismaService.careerRecomendation.deleteMany({});
+      }
       const prompt = `Based on the following user responses, generate personalized career recommendations and skill-building exercises:
   ${JSON.stringify(answers, null, 2)}
   Provide a list of 10 recommended skill cards, each containing a title, description, and button text. Return the result as a JSON array.`;
@@ -141,7 +205,15 @@ export class CourseService {
         max_tokens: 1000,
       });
 
-      console.log('Raw API response:', response);
+      const questions = Object.keys(answers);
+      const answersArray = Object.values(answers);
+      await this.prismaService.userPreferenceQuestion.createMany({
+        data: questions.map((question, index) => ({
+          userId,
+          question,
+          answer: answersArray[index],
+        })),
+      });
 
       if (
         response &&
@@ -154,8 +226,8 @@ export class CourseService {
 
         let parsedContent;
         try {
-          // Try to parse the content as JSON
           parsedContent = JSON.parse(content);
+          console.log(parsedContent);
         } catch (parseError) {
           console.error('Error parsing API response as JSON:', parseError);
           // If parsing fails, treat the content as a string and wrap it in an array
@@ -168,8 +240,18 @@ export class CourseService {
           ];
         }
 
-        // Ensure the result is an array
-        return Array.isArray(parsedContent) ? parsedContent : [parsedContent];
+        parsedContent = Array.isArray(parsedContent)
+          ? parsedContent
+          : [parsedContent];
+        await this.prismaService.careerRecomendation.createMany({
+          data: parsedContent.map((skill) => ({
+            userId,
+            title: skill.title,
+            description: skill.description,
+            buttonText: skill.buttonText,
+          })),
+        });
+        return parsedContent;
       } else {
         console.error('Unexpected API response structure:', response);
         return [];
@@ -182,23 +264,55 @@ export class CourseService {
       throw error;
     }
   }
-  async  generateInterviewQuestion(difficulty) {
-    const prompt = `Generate an interview question for a job interview. The difficulty level is ${difficulty}. Return the response as a JSON object with 'id', 'text', and 'difficulty' properties.`;
-  
+  async getCareerRecommendations(userId: string) {
+    console.log(userId);
+    const recommendations =
+      await this.prismaService.careerRecomendation.findMany({
+        where: {
+          userId,
+        },
+      });
+    return recommendations;
+  }
+  async generateInterviewQuestion(topic: string) {
+    const prompt = `. Return 5 elements list of interview questions for a job interview topic ${topic}.  . 
+    The questions should be in the following format:
+    [
+      {
+        "id": "1",
+        "text": "What is your experience with React?",
+        "difficulty": "medium"
+      },
+      {
+        "id": "2",
+        "text": "Explain the difference between a class and a function component in React.",
+        "difficulty": "medium"
+      }
+    ]`;
+
     try {
       const response = await this.groqService.sendPrompts({
         model: 'mixtral-8x7b-32768',
-        messages: [{ role: 'user', content: prompt }],
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a JSON API that return valid JSON only',
+          },
+          { role: 'user', content: prompt },
+        ],
         temperature: 0.7,
         max_tokens: 1000,
       });
-  
+
       const content = response.choices[0].message.content;
       console.log('AI response:', content);
       return JSON.parse(content);
     } catch (error) {
-      console.error('Error calling Groq API:', error.response?.data || error.message);
-      throw new Error('Failed to generate interview question');
+      console.error(
+        'Error calling Groq API:',
+        error.response?.data || error.message,
+      );
+      throw new Error('Failed to generate interview questions');
     }
   }
 }
