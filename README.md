@@ -24,7 +24,14 @@ Gahigi is a virtual mentor designed to help young professionals in Rwanda kick-s
 4. **Job Market Insights**  
    Stay informed about entry-level opportunities in Rwanda's job market. Gahigi keeps you up-to-date with relevant job listings and industry trends.
 
----
+
+### Project Goals
+
+# Gahigi aims to:
+
+1 . Boost confidence among young professionals.
+2 . Enhance employability through practical skill-building.
+3.  Provide personalized career guidance to help users take their first steps in the professional world.
 
 ## Technologies Used
 
