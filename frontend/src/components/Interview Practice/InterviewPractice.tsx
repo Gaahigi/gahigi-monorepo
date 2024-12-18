@@ -26,7 +26,6 @@ import MicIcon from "@mui/icons-material/Mic";
 import StopIcon from "@mui/icons-material/Stop";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import AppButton from "../Button/AppButton";
 import { toast } from "react-toastify";
 
 interface Question {
